@@ -1,0 +1,40 @@
+name: Build and Deploy Mulesoft App
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+env:
+  ANYPOINT_USERNAME: ${{ secrets.ANYPOINT_USERNAME }}
+  ANYPOINT_PASSWORD: ${{ secrets.ANYPOINT_PASSWORD }}
+  ANYPOINT_PLATFORM: "Sandbox"
+  APP_NAME: "your-mule-app-name"
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true || github.event_name == 'push'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '8'
+          cache: 'maven'
+
+      - name: Build and Deploy to Anypoint Platform
+        run: |
+          mvn clean package deploy -DmuleDeploy \
+          -Dmule.artifact=$APP_NAME \
+          -Danypoint.username=${ANYPOINT_USERNAME} \
+          -Danypoint.password=${ANYPOINT_PASSWORD} \
+          -Denv=${ANYPOINT_PLATFORM} \
+          -DskipTests
